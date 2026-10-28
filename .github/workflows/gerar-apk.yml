@@ -1,0 +1,53 @@
+# Gera o APK Android (instalação direta, fora da Play Store) a cada atualização da main
+# e publica em Releases → "android", sempre no mesmo link de download.
+name: Gerar APK Android
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm test
+      - name: Build do app
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+      - run: npx cap sync android
+      - name: Compilar APK
+        working-directory: android
+        run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
+      - run: cp android/app/build/outputs/apk/release/app-release.apk domino-placar.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: domino-placar-apk
+          path: domino-placar.apk
+      - name: Publicar para download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete android --yes --cleanup-tag || true
+          gh release create android domino-placar.apk \
+            --title "Dominó Placar para Android (versão ${{ github.run_number }})" \
+            --notes "Instalação direta no Android: baixe domino-placar.apk no celular, abra o arquivo e permita instalar apps desta fonte. Para atualizar, instale a versão nova por cima — as partidas são mantidas."

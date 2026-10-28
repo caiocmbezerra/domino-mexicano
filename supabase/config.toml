@@ -1,0 +1,6 @@
+# Configuração mínima para publicar a função com a Supabase CLI.
+project_id = "domino-mexicano"
+
+[functions.contar-pecas]
+# Exige a chave pública (anon) do projeto no cabeçalho — o app já envia.
+verify_jwt = true
