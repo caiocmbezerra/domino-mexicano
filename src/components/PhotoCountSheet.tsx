@@ -1,6 +1,8 @@
 import { AlertTriangle, Camera, Check, ImagePlus, Pencil, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { contarPecas, prepararFoto } from "../photo/api";
+import { tileLabel } from "../domain/tiles";
+import type { Tile } from "../domain/types";
 import { PIP_COLORS } from "./DominoTile";
 import { haptic } from "./ui";
 
@@ -47,11 +49,14 @@ function MiniPeca({ a, b }: { a: number; b: number }) {
  */
 export function PhotoCountSheet({
   playerName,
+  otherHands = [],
   onApply,
   onClose,
 }: {
   playerName: string;
-  onApply: (points: number, hadZeroDouble: boolean) => void;
+  /** Peças já conferidas pela foto dos outros jogadores nesta rodada (para avisar repetição). */
+  otherHands?: { name: string; tiles: Tile[] }[];
+  onApply: (points: number, hadZeroDouble: boolean, tiles: Tile[]) => void;
   onClose: () => void;
 }) {
   const [estado, setEstado] = useState<Estado>({ fase: "escolher" });
@@ -97,6 +102,22 @@ export function PhotoCountSheet({
   };
 
   const total = pecas.reduce((s, p) => s + p.a + p.b, 0);
+  // Peças desta foto que já estão na mão de outro jogador (ou repetidas na própria foto).
+  const repetidas: string[] = [];
+  /** Motivo da repetição de cada peça (rótulo → texto curto), para marcar a própria linha. */
+  const motivo = new Map<string, string>();
+  const vistos = new Map<string, number>();
+  for (const p of pecas) vistos.set(tileLabel(p), (vistos.get(tileLabel(p)) ?? 0) + 1);
+  for (const [label, n] of vistos) {
+    const donos = otherHands.filter((h) => h.tiles.some((t) => tileLabel(t) === label)).map((h) => h.name);
+    if (donos.length) {
+      repetidas.push(`A peça ${label} já está na mão de ${donos.join(", ")}.`);
+      motivo.set(label, `Repetida: já está na mão de ${donos.join(", ")}`);
+    } else if (n > 1) {
+      repetidas.push(`A peça ${label} aparece ${n} vezes nesta foto.`);
+      motivo.set(label, `Repetida: aparece ${n} vezes nesta foto`);
+    }
+  }
   const temZero = pecas.some((p) => p.a === 0 && p.b === 0);
   const pendentes = pecas.filter((p) => p.conferir).length;
   const atualizar = (id: number, campo: "a" | "b", v: number) =>
@@ -176,7 +197,16 @@ export function PhotoCountSheet({
             </div>
             <ul className="grid gap-2">
               {pecas.map((p, i) => (
-                <li key={p.id} className={`min-w-0 rounded-xl border p-2 ${p.conferir ? "border-accent bg-accent-soft" : "border-line bg-surface"}`}>
+                <li
+                  key={p.id}
+                  className={`min-w-0 rounded-xl border p-2 ${
+                    motivo.has(tileLabel(p))
+                      ? "border-danger bg-danger-soft"
+                      : p.conferir
+                        ? "border-accent bg-accent-soft"
+                        : "border-line bg-surface"
+                  }`}
+                >
                   <div className="flex items-center gap-3">
                     <span className="num w-5 text-sm font-bold text-muted">{i + 1}</span>
                     <MiniPeca a={p.a} b={p.b} />
@@ -192,6 +222,9 @@ export function PhotoCountSheet({
                       <Trash2 size={18} />
                     </button>
                   </div>
+                  {motivo.has(tileLabel(p)) && editando !== p.id && (
+                    <p className="ml-8 mt-1 text-sm font-bold text-danger">{motivo.get(tileLabel(p))}</p>
+                  )}
                   {p.conferir && editando !== p.id && (
                     <p className="ml-8 mt-1 text-sm font-bold text-accent">Conferir: a IA ficou em dúvida</p>
                   )}
@@ -231,6 +264,19 @@ export function PhotoCountSheet({
               <Plus size={18} /> Adicionar peça que faltou
             </button>
 
+            {repetidas.length > 0 && (
+              <div className="mt-4 rounded-xl bg-danger-soft p-3 text-danger" role="alert">
+                <p className="flex items-center gap-2 font-extrabold">
+                  <AlertTriangle size={18} /> Peça repetida
+                </p>
+                {repetidas.map((r) => (
+                  <p key={r} className="mt-1 text-sm font-semibold">
+                    {r}
+                  </p>
+                ))}
+                <p className="mt-1 text-sm">No duplo-12 cada peça existe uma vez só: confira as fotos.</p>
+              </div>
+            )}
             <div className="mt-4 flex items-center justify-between rounded-2xl bg-surface p-4">
               <div>
                 <div className="label">Total das peças</div>
@@ -248,7 +294,7 @@ export function PhotoCountSheet({
                 className="btn btn-primary btn-lg w-full"
                 onClick={() => {
                   haptic(25);
-                  onApply(total, temZero);
+                  onApply(total, temZero, pecas.map((p) => ({ a: p.a, b: p.b })));
                 }}
               >
                 <Check size={22} /> Usar {total} pontos{temZero ? " e marcar 0-0" : ""}

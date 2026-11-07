@@ -12,6 +12,7 @@ import { doubleLabel } from "../domain/doubles";
 import { formatDateTime } from "../domain/format";
 import { closeRound, editClosedRound, setRoundOpener, updateDraft } from "../domain/operations";
 import { computeRoundResults, parsePoints } from "../domain/scoring";
+import { findTileConflicts, tileLabel, tilesSum } from "../domain/tiles";
 import { collectMatchData } from "../domain/stats";
 import type { ID, RoundDraft } from "../domain/types";
 import { useNameOf, useStore } from "../state/store";
@@ -54,6 +55,7 @@ export function RoundScreen() {
   };
 
   const outcome = computeRoundResults(draft, participants, match.settings, nameOf);
+  const conflicts = findTileConflicts(draft, participants, nameOf);
   const resultOf = (id: ID) => outcome.results.find((r) => r.playerId === id)!;
 
   // Totais acumulados: rodadas fechadas, exceto esta, + o que está sendo lançado agora.
@@ -80,8 +82,17 @@ export function RoundScreen() {
     order.splice(index + delta, 0, item);
     setDraft({ ...draft, exitOrder: order });
   };
-  const setPoints = (id: ID, text: string) =>
-    setDraft({ ...draft, points: { ...draft.points, [id]: parsePoints(text.replace(/\D/g, "").slice(0, 4)) } });
+  const setPoints = (id: ID, text: string) => {
+    const value = parsePoints(text.replace(/\D/g, "").slice(0, 4));
+    // Digitou um valor diferente da soma das peças da foto: as peças deixam de valer para a conferência.
+    const tiles = draft.tiles?.[id];
+    let nextTiles = draft.tiles;
+    if (tiles && value !== tilesSum(tiles)) {
+      nextTiles = { ...draft.tiles };
+      delete nextTiles[id];
+    }
+    setDraft({ ...draft, points: { ...draft.points, [id]: value }, tiles: nextTiles });
+  };
   const toggleZero = (id: ID) => {
     haptic();
     setDraft({ ...draft, zeroDouble: { ...draft.zeroDouble, [id]: !draft.zeroDouble[id] } });
@@ -150,13 +161,26 @@ export function RoundScreen() {
       title: isOpen ? `Fechar a rodada ${round.number}?` : `Salvar correção da rodada ${round.number}?`,
       message: (
         <>
+          {conflicts.length > 0 && (
+            <div className="mb-3 rounded-xl bg-danger-soft p-3 text-sm font-semibold text-danger">
+              {conflicts.map((c) => (
+                <p key={c.label + c.kind}>⚠ {c.message}</p>
+              ))}
+            </div>
+          )}
           {!isOpen && (
             <p className="mb-2 text-sm">Totais, ranking e estatísticas de toda a partida serão recalculados.</p>
           )}
           {summary}
         </>
       ),
-      confirmLabel: isOpen ? "Fechar rodada" : "Salvar correção",
+      confirmLabel: conflicts.length
+        ? isOpen
+          ? "Fechar mesmo assim"
+          : "Salvar mesmo assim"
+        : isOpen
+          ? "Fechar rodada"
+          : "Salvar correção",
     });
     if (!ok) return;
     const saved = isOpen
@@ -353,6 +377,11 @@ export function RoundScreen() {
                         : "Falta informar"}
                 </span>
               </div>
+              {draft.tiles?.[id] && (
+                <p className="num mt-2 text-sm text-muted" aria-label={`Peças de ${nameOf(id)} pela foto`}>
+                  Pela foto: {draft.tiles[id].map(tileLabel).join(" · ")}
+                </p>
+              )}
             </li>
           );
         })}
@@ -365,16 +394,30 @@ export function RoundScreen() {
           ))}
         </ul>
       )}
+      {conflicts.length > 0 && (
+        <div className="mt-4 rounded-xl bg-danger-soft p-3 text-danger" role="alert" aria-label="Conferência entre jogadores">
+          <p className="font-extrabold">Confira antes de fechar</p>
+          {conflicts.map((c) => (
+            <p key={c.label + c.kind} className="mt-1 text-sm font-semibold">
+              {c.message}
+            </p>
+          ))}
+        </div>
+      )}
       {readOnly && rounds.length > 0 && <p className="mt-4 text-sm text-muted">Partida encerrada: consulta somente leitura.</p>}
 
       {photoFor && (
         <PhotoCountSheet
           playerName={nameOf(photoFor)}
+          otherHands={participants
+            .filter((pid) => pid !== photoFor && draft.tiles?.[pid])
+            .map((pid) => ({ name: nameOf(pid), tiles: draft.tiles![pid] }))}
           onClose={() => setPhotoFor(null)}
-          onApply={(points, hadZero) => {
+          onApply={(points, hadZero, tiles) => {
             setDraft({
               ...draft,
               points: { ...draft.points, [photoFor]: points },
+              tiles: { ...draft.tiles, [photoFor]: tiles },
               // A foto só MARCA o 0-0 quando o encontra; nunca desmarca uma marcação manual.
               zeroDouble: hadZero ? { ...draft.zeroDouble, [photoFor]: true } : draft.zeroDouble,
             });

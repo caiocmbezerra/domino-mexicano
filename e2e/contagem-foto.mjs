@@ -126,6 +126,72 @@ try {
   check(avisou, "sem internet: mensagem clara");
   await btn("Digitar os pontos").click();
   check((await page.getByRole("textbox", { name: "Pontos de Beto" }).inputValue()) === "36", "falha não altera os pontos já lançados");
+
+  console.log("Peça repetida entre jogadores (as fotos de teste da turma)");
+  const resposta = (pecas) => ({
+    fotoLegivel: true,
+    pecas: pecas.map(([a, b]) => ({ a, b, confianca: "alta" })),
+    total: pecas.reduce((s, [a, b]) => s + a + b, 0),
+    temZeroZero: false,
+    pecasIlegiveis: 0,
+    descartadas: 0,
+    observacoes: "",
+  });
+  const fotos = [
+    resposta([[10, 6], [4, 12], [10, 5], [3, 12]]),
+    resposta([[12, 12], [12, 11], [12, 10], [12, 9], [10, 6], [4, 12]]),
+  ];
+  await page.unroute(`${FAKE}/functions/v1/contar-pecas`);
+  await page.route(`${FAKE}/functions/v1/contar-pecas`, (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" }, body: JSON.stringify(fotos.shift()) }),
+  );
+  await page.goto(`http://localhost:${PORT}/#/nova`);
+  for (const n of ["João", "Pedro", "Carlos"]) {
+    await page.getByLabel("Nome do novo jogador").fill(n);
+    await btn("Adicionar jogador").click();
+  }
+  await btn("Iniciar partida com 3").click();
+  await page.getByRole("button", { name: "Carlos", exact: true }).click();
+  await btn(/Confirmar/).click();
+  await btn("Carlos").filter({ hasText: "Carlos" }).last().click(); // Carlos vence
+
+  const fotoDe = async (nome) => {
+    await btn(`Contar pontos de ${nome} por foto`).click();
+    await page.getByLabel("Tirar foto das peças").setInputFiles({ name: "p.png", mimeType: "image/png", buffer: Buffer.from(png, "base64") });
+    await page.getByText("Confira cada peça com a foto").waitFor();
+  };
+  await fotoDe("João");
+  await btn("Usar 62 pontos").click();
+  check((await page.getByRole("textbox", { name: "Pontos de João" }).inputValue()) === "62", "João: 62 pontos pela foto");
+  check((await page.getByLabel("Peças de João pela foto").innerText()).includes("10|6 · 12|4 · 10|5 · 12|3"), "peças de João ficam visíveis na rodada");
+
+  await fotoDe("Pedro");
+  const aviso = await page.getByRole("dialog").innerText();
+  check(aviso.includes("A peça 10|6 já está na mão de João") && aviso.includes("A peça 12|4 já está na mão de João"), "aviso na hora da foto: 10|6 e 12|4 já estão com João");
+  await page.waitForTimeout(400);
+  check((await page.getByText("Repetida: já está na mão de João").count()) === 2, "as duas peças repetidas ficam marcadas na própria linha");
+  await page.getByText("Repetida: já está na mão de João").first().scrollIntoViewIfNeeded();
+  if (process.env.SCREENSHOTS_DIR) await page.screenshot({ path: `${process.env.SCREENSHOTS_DIR}/16-peca-repetida.png` });
+  await btn("Usar 122 pontos").click();
+
+  const painel = page.getByRole("alert", { name: "Conferência entre jogadores" });
+  check(await painel.isVisible(), "rodada mostra 'Confira antes de fechar'");
+  check((await painel.innerText()).includes("A peça 10|6 apareceu para João e Pedro"), "mensagem cita a peça e os dois jogadores");
+  await btn("Revisar e fechar rodada").click();
+  const confirma = await page.getByRole("alertdialog").innerText();
+  check(confirma.includes("10|6") && confirma.includes("12|4"), "aviso repetido no resumo antes de fechar");
+  check(await btn("Fechar mesmo assim").isVisible(), "fechar exige confirmação explícita ('Fechar mesmo assim')");
+  await btn("Cancelar").click();
+
+  // O operador corrige Pedro para 90 (sem as duas peças): a conferência deixa de valer e o aviso some.
+  await page.getByRole("textbox", { name: "Pontos de Pedro" }).fill("90");
+  check((await painel.count()) === 0, "corrigindo o valor à mão, o aviso desaparece");
+  check((await page.getByLabel("Peças de Pedro pela foto").count()) === 0, "peças de Pedro deixam de valer após digitar outro total");
+  await btn("Revisar e fechar rodada").click();
+  check(await btn("Fechar rodada", true).isVisible(), "sem conflito, fechamento normal");
+  await btn("Fechar rodada", true).click();
+  check(await page.getByText("Rodada 1 fechada!").waitFor({ timeout: 5000 }).then(() => true, () => false), "rodada fechada");
+
 } catch (e) {
   falhas++;
   console.error("Falha inesperada:", e);

@@ -53,6 +53,17 @@ export interface RoundDraft {
   points: Record<ID, number | null>;
   /** Quem terminou com o 0-0 na mão. */
   zeroDouble: Record<ID, boolean>;
+  /**
+   * Peças conferidas pela foto, por jogador (só para quem usou a contagem por foto).
+   * Servem para avisar quando a mesma peça aparece para dois jogadores.
+   */
+  tiles?: Record<ID, Tile[]>;
+}
+
+/** Uma peça de dominó: os pontos de cada metade (0 a 12 no duplo-12). */
+export interface Tile {
+  a: number;
+  b: number;
 }
 
 export interface Round {
