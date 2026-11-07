@@ -1,5 +1,6 @@
-import { Download, Moon, Sun, Upload } from "lucide-react";
+import { Download, Moon, QrCode, Sun, Upload } from "lucide-react";
 import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useConfirm } from "../components/ConfirmDialog";
 import { RulesEditor } from "../components/RulesEditor";
 import { useToast } from "../components/Toast";
@@ -114,6 +115,11 @@ export function SettingsScreen() {
       <p className="mt-2 text-sm text-muted">
         Partidas já iniciadas mantêm as regras com que começaram.
       </p>
+
+      <SectionTitle>Instalar e convidar</SectionTitle>
+      <Link to="/instalar" className="btn btn-secondary w-full">
+        <QrCode size={20} /> Como instalar · QR code da turma
+      </Link>
 
       <SectionTitle>Dados do aparelho</SectionTitle>
       <p className="mb-3 text-sm text-muted">

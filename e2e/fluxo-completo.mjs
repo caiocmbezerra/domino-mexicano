@@ -230,6 +230,24 @@ try {
   check(badges === 2, "50 × 50 aparece como empate explícito, ambos em 1º lugar");
   await shot("12-empate");
 
+  console.log("Como instalar");
+  await page.goto(`http://localhost:${PORT}/#/`);
+  await page.getByRole("link", { name: "Instalar" }).click();
+  check(await has(page, "Convidar a turma"), "tela Como instalar abre pela tela inicial");
+  check(
+    await page.getByRole("img", { name: "QR code do endereço https://caiocmbezerra.github.io/domino-mexicano/" }).isVisible(),
+    "QR code com o endereço público do app",
+  );
+  await page.getByRole("tab", { name: "iPhone" }).click();
+  check(await has(page, "Adicionar à Tela de Início"), "passo a passo do iPhone (Safari)");
+  await page.getByRole("tab", { name: "Android" }).click();
+  check(
+    (await page.getByRole("link", { name: "Baixar APK" }).getAttribute("href")) ===
+      "https://github.com/caiocmbezerra/domino-mexicano/releases/download/android/domino-placar.apk",
+    "Android: link do APK",
+  );
+  await shot("15-instalar");
+
   await page.goto(`http://localhost:${PORT}/#/estatisticas`);
   await shot("13-estatisticas");
   await page.goto(`http://localhost:${PORT}/#/ajustes`);

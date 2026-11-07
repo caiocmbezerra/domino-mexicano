@@ -6,6 +6,7 @@ import { FinishScreen } from "./screens/FinishScreen";
 import { GlobalStatsScreen } from "./screens/GlobalStatsScreen";
 import { HistoryScreen } from "./screens/HistoryScreen";
 import { HomeScreen } from "./screens/HomeScreen";
+import { InstallScreen } from "./screens/InstallScreen";
 import { MatchScreen } from "./screens/MatchScreen";
 import { NewMatchScreen } from "./screens/NewMatchScreen";
 import { OpeningScreen } from "./screens/OpeningScreen";
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="/historico" element={<HistoryScreen />} />
               <Route path="/estatisticas" element={<GlobalStatsScreen />} />
               <Route path="/ajustes" element={<SettingsScreen />} />
+              <Route path="/instalar" element={<InstallScreen />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Router>

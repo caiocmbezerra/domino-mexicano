@@ -9,6 +9,10 @@ export const APP_CONFIG = {
   minPlayers: 2,
   maxPlayers: 12,
   storageKey: "domino-mexicano-placar:v1",
+  /** Endereço público do app (usado no QR code e no convite). */
+  publicUrl: "https://caiocmbezerra.github.io/domino-mexicano/",
+  /** APK Android de instalação direta, gerado pelo GitHub Actions. */
+  apkUrl: "https://github.com/caiocmbezerra/domino-mexicano/releases/download/android/domino-placar.apk",
 } as const;
 
 /**

@@ -1,4 +1,4 @@
-import { BarChart3, History, Play, Plus, Settings, Users } from "lucide-react";
+import { BarChart3, History, Play, Plus, QrCode, Settings, Users } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { DominoTile } from "../components/DominoTile";
 import { getMatchRounds, getOpenRound } from "../domain/database";
@@ -106,9 +106,14 @@ export function HomeScreen() {
             <span className="text-xs font-semibold text-muted">{db.players.length} cadastrados</span>
           </Link>
         </div>
-        <Link to="/estatisticas" className="btn btn-secondary w-full">
-          <BarChart3 size={22} /> Estatísticas
-        </Link>
+        <div className="grid grid-cols-2 gap-3">
+          <Link to="/estatisticas" className="btn btn-secondary">
+            <BarChart3 size={22} /> Estatísticas
+          </Link>
+          <Link to="/instalar" className="btn btn-secondary">
+            <QrCode size={22} /> Instalar
+          </Link>
+        </div>
       </nav>
     </div>
   );
