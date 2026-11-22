@@ -41,6 +41,7 @@ src/
   screens/               telas
   components/            peça de dominó (SVG), ranking, diálogos, avisos
 e2e/fluxo-completo.mjs   fluxo completo no navegador, em tela de celular
+api/contar-pecas.ts      função da Vercel que conta as pedras da foto (opcional)
 supabase/schema.sql      esquema preparado para sincronizar entre aparelhos (opcional)
 ```
 
@@ -67,35 +68,32 @@ Quem sai depois do vencedor recebe 0 sugerido no campo de pontos, e o valor pode
 
 ## Contagem de pontos por foto (opcional)
 
-**É opcional, à escolha do organizador.** Digitar os pontos é sempre o caminho normal. A câmera só aparece quando o servidor está configurado **e** o organizador liga a opção em **Ajustes → Contagem por foto** (desligada por padrão). Com ela ligada, cada jogador que ficou com peças ganha um botão de câmera ao lado do campo de pontos:
+**É opcional, à escolha do organizador.** Digitar os pontos é sempre o caminho normal. A câmera só aparece quando a função está publicada **e** o organizador liga a opção em **Ajustes → Contagem por foto** (desligada por padrão). Com ela ligada, cada jogador que ficou com peças ganha um botão de câmera ao lado do campo de pontos:
 
 1. Ele vira as peças para cima, separadas, com boa luz, e tira a foto.
-2. O app reduz a foto no próprio celular e envia para a função `contar-pecas` (Supabase).
+2. O app reduz a foto no próprio celular e envia para a função `api/contar-pecas` (Vercel).
 3. A IA (Claude, modelo `claude-opus-5-5`) **lista** as peças. A **soma é feita no código**, nunca pela IA, e valores fora de 0–12 são descartados.
 4. O operador confere peça por peça contra a foto. Peças em que a IA ficou em dúvida vêm destacadas, e dá para corrigir, remover ou adicionar uma peça que faltou.
 5. "Usar N pontos" preenche o campo. Se o 0-0 estiver entre as peças, ele já é marcado e a regra da turma é aplicada. Nada fecha a rodada sem a confirmação normal.
 
 A foto não é guardada em lugar nenhum. Sem internet ou sem configuração, o app funciona como antes, com contagem manual.
 
-### Ativar
+### Ativar (Vercel)
 
-A chave da API fica **só no servidor** (segredo da função), nunca dentro do app.
+A função fica em `api/contar-pecas.ts` e roda na Vercel. A chave da API fica **só no servidor**, numa variável de ambiente da Vercel, nunca dentro do app.
 
-1. Crie uma chave em https://platform.claude.com (Settings → API Keys) e adicione créditos. Cada foto custa poucos centavos de dólar.
-2. Crie um projeto no Supabase **separado** só para o dominó (plano gratuito).
-3. Na pasta do projeto, com a [Supabase CLI](https://supabase.com/docs/guides/cli):
-   ```bash
-   supabase login
-   supabase link --project-ref SEU-PROJETO
-   supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
-   supabase functions deploy contar-pecas
-   ```
-4. No GitHub, em **Settings → Secrets and variables → Actions → Variables**, cadastre `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (URL e chave **anon** do projeto). O site e o APK seguintes já saem com a câmera disponível. Localmente, use `.env.local` (modelo em `.env.example`).
+1. Crie uma chave em https://platform.claude.com/settings/keys, coloque créditos e defina um **limite de gasto mensal**.
+2. Em https://vercel.com/new, importe o repositório `caiocmbezerra/domino-mexicano`. O tipo Vite é detectado sozinho.
+3. Em **Environment Variables**, cadastre `ANTHROPIC_API_KEY` com a chave e publique (Deploy).
+4. O site da Vercel já sai com a câmera disponível, porque usa `/api/contar-pecas` no mesmo domínio. Para o site do GitHub Pages e o APK, coloque o endereço completo da função em `APP_CONFIG.contagemUrl` (`src/config.ts`), por exemplo `https://domino-mexicano.vercel.app/api/contar-pecas`, ou na variável `VITE_CONTAGEM_URL` do GitHub Actions.
 5. No app, o organizador liga a opção em **Ajustes → Contagem por foto**.
 
-A chave anon é pública por natureza. Ela impede chamadas anônimas fora do app, mas quem a extrair do app pode chamar a função e gastar créditos. Por isso vale definir um limite de gasto mensal no painel da Anthropic.
+Só três origens podem chamar a função pelo navegador: o GitHub Pages do app, o app Android e o próprio domínio da Vercel. Para acrescentar outras, use a variável `ORIGENS_PERMITIDAS`, separadas por vírgula. Fora do navegador, a proteção real contra abuso é o limite de gasto no Console da Anthropic.
 
-Testes: `src/photo/contagem.test.ts` cobre as regras aplicadas à resposta, e `node e2e/contagem-foto.mjs` testa o fluxo no navegador com a resposta da IA simulada, sem gastar créditos.
+**Testes:**
+- `src/photo/contagem.test.ts` cobre as regras aplicadas à resposta.
+- `node e2e/contagem-foto.mjs` testa o fluxo no navegador com a resposta da IA simulada.
+- O workflow **Testar contagem por foto (IA real)** (ou `ANTHROPIC_API_KEY=... node scripts/testar-contagem-real.ts e2e/fotos-teste`) roda a IA de verdade sobre fotos de resultado conhecido e compara peça por peça.
 
 ## Instalação no celular
 

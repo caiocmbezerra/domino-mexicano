@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { processarResposta, somaPecas } from "../../supabase/functions/contar-pecas/contagem";
+import { processarResposta, somaPecas } from "../../api/contar-pecas";
 
 describe("Contagem por foto — regras aplicadas à resposta da IA", () => {
   it("soma as peças no código (não confia na IA para somar)", () => {

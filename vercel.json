@@ -1,4 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "[ \"$VERCEL_ENV\" != \"production\" ]"
+  "ignoreCommand": "[ \"$VERCEL_ENV\" != \"production\" ]",
+  "functions": {
+    "api/contar-pecas.ts": {
+      "maxDuration": 60
+    }
+  }
 }

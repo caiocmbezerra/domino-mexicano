@@ -12,7 +12,7 @@ const vite = ["node_modules/vite/bin/vite.js"];
 const FAKE = "https://exemplo-supabase.test";
 execFileSync(process.execPath, [...vite, "build", "--outDir", "dist-foto", "--emptyOutDir"], {
   cwd: root,
-  env: { ...process.env, VITE_SUPABASE_URL: FAKE, VITE_SUPABASE_ANON_KEY: "chave-publica-teste" },
+  env: { ...process.env, VITE_CONTAGEM_URL: `${FAKE}/api/contar-pecas` },
   stdio: "ignore",
 });
 
@@ -31,7 +31,7 @@ page.on("pageerror", (e) => (falhas++, console.log("  ✗ erro na página:", e.m
 
 // Resposta simulada da função: 12|7, 5|3 (duvidosa), 0|0 e uma peça ilegível.
 let pedido = null;
-await page.route(`${FAKE}/functions/v1/contar-pecas`, async (route) => {
+await page.route(`${FAKE}/api/contar-pecas`, async (route) => {
   pedido = { headers: route.request().headers(), corpo: route.request().postDataJSON() };
   await route.fulfill({
     status: 200,
@@ -95,7 +95,7 @@ try {
   });
   await page.getByLabel("Tirar foto das peças").setInputFiles({ name: "pecas.png", mimeType: "image/png", buffer: Buffer.from(png, "base64") });
   await page.getByText("Confira cada peça com a foto").waitFor();
-  check(pedido?.headers.authorization === "Bearer chave-publica-teste", "envia a chave pública do Supabase");
+  check(!pedido?.headers.authorization && !pedido?.headers.apikey, "o app não envia nenhuma chave: ela fica só no servidor");
   check(pedido?.corpo.tipo === "image/jpeg" && pedido.corpo.imagem.length > 100, "envia a foto reduzida em JPEG");
   const dialogo = await page.getByRole("dialog").innerText();
   check(/27/.test(dialogo) && /Inclui o 0-0/.test(dialogo), "mostra total 27 e o 0-0 encontrado");
@@ -118,8 +118,8 @@ try {
   check(await page.getByText("Regra do 0-0: conta 0").isVisible(), "regra da turma aplicada: conta 0");
 
   console.log("Erro de rede");
-  await page.unroute(`${FAKE}/functions/v1/contar-pecas`);
-  await page.route(`${FAKE}/functions/v1/contar-pecas`, (r) => r.abort());
+  await page.unroute(`${FAKE}/api/contar-pecas`);
+  await page.route(`${FAKE}/api/contar-pecas`, (r) => r.abort());
   await btn("Contar pontos de Beto por foto").click();
   await page.getByLabel("Tirar foto das peças").setInputFiles({ name: "p.png", mimeType: "image/png", buffer: Buffer.from(png, "base64") });
   const avisou = await page.getByText(/Sem conexão/).waitFor({ timeout: 5000 }).then(() => true, () => false);
@@ -141,8 +141,8 @@ try {
     resposta([[10, 6], [4, 12], [10, 5], [3, 12]]),
     resposta([[12, 12], [12, 11], [12, 10], [12, 9], [10, 6], [4, 12]]),
   ];
-  await page.unroute(`${FAKE}/functions/v1/contar-pecas`);
-  await page.route(`${FAKE}/functions/v1/contar-pecas`, (route) =>
+  await page.unroute(`${FAKE}/api/contar-pecas`);
+  await page.route(`${FAKE}/api/contar-pecas`, (route) =>
     route.fulfill({ status: 200, contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" }, body: JSON.stringify(fotos.shift()) }),
   );
   await page.goto(`http://localhost:${PORT}/#/nova`);

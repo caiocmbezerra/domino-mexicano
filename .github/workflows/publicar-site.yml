@@ -30,9 +30,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Opcional: contagem por foto. Cadastre em Settings → Secrets and variables → Actions → Variables.
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          # Opcional: endereço da contagem por foto (senão vale APP_CONFIG.contagemUrl).
+          VITE_CONTAGEM_URL: ${{ vars.VITE_CONTAGEM_URL }}
       - uses: actions/configure-pages@v5
         with:
           enablement: true

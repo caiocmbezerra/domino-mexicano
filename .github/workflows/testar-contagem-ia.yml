@@ -14,13 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: denoland/setup-deno@v2
+      - uses: actions/setup-node@v4
         with:
-          deno-version: v2.x
-      - name: Conferir o código da função
-        working-directory: supabase/functions/contar-pecas
-        run: deno check index.ts contar.ts testar-fotos.ts
+          node-version: 22
+          cache: npm
+      - run: npm ci
       - name: Contar as fotos de teste
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: deno run --config supabase/functions/contar-pecas/deno.json --allow-env --allow-read --allow-write --allow-net supabase/functions/contar-pecas/testar-fotos.ts e2e/fotos-teste
+        run: node scripts/testar-contagem-real.ts e2e/fotos-teste

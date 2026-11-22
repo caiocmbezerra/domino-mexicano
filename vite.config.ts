@@ -7,6 +7,8 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   base: "./",
   plugins: [react(), tailwindcss()],
+  // No build da Vercel a função de contagem fica no mesmo domínio.
+  define: { __CONTAGEM_PADRAO__: JSON.stringify(process.env.VERCEL ? "/api/contar-pecas" : "") },
   test: {
     include: ["src/**/*.test.ts"],
     environment: "node",

@@ -1,5 +1,5 @@
 import { PHOTO_COUNT } from "../config";
-import type { ResultadoContagem } from "../../supabase/functions/contar-pecas/contagem";
+import type { ResultadoContagem } from "../../api/contar-pecas";
 
 export type { ResultadoContagem };
 
@@ -23,13 +23,11 @@ export async function prepararFoto(arquivo: File): Promise<{ base64: string; pre
 export async function contarPecas(base64: string, sinal?: AbortSignal): Promise<ResultadoContagem> {
   let res: Response;
   try {
-    res = await fetch(`${PHOTO_COUNT.url}/functions/v1/contar-pecas`, {
+    res = await fetch(PHOTO_COUNT.url, {
       method: "POST",
       signal: sinal,
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${PHOTO_COUNT.anonKey}`,
-        apikey: PHOTO_COUNT.anonKey,
       },
       body: JSON.stringify({ imagem: base64, tipo: "image/jpeg" }),
     });
