@@ -1,0 +1,26 @@
+# Teste da contagem por foto com a IA de verdade, sobre fotos de resultado conhecido.
+# Só roda quando disparado à mão (Actions → "Testar contagem por foto (IA real)" → Run workflow),
+# porque gasta créditos da API. Precisa do segredo ANTHROPIC_API_KEY no repositório.
+name: Testar contagem por foto (IA real)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Conferir o código da função
+        working-directory: supabase/functions/contar-pecas
+        run: deno check index.ts contar.ts testar-fotos.ts
+      - name: Contar as fotos de teste
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: deno run --config supabase/functions/contar-pecas/deno.json --allow-env --allow-read --allow-write --allow-net supabase/functions/contar-pecas/testar-fotos.ts e2e/fotos-teste

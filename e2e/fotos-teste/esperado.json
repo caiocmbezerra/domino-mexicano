@@ -1,0 +1,7 @@
+{
+  "fotos": {
+    "mao-1.jpg": { "jogador": "Jogador 1", "total": 62, "pecas": ["10|6", "12|4", "10|5", "12|3"] },
+    "mao-2.jpg": { "jogador": "Jogador 2", "total": 122, "pecas": ["12|12", "12|11", "12|10", "12|9", "10|6", "12|4"] }
+  },
+  "repetidas_entre_fotos": ["10|6", "12|4"]
+}
