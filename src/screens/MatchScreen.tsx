@@ -150,7 +150,7 @@ export function MatchScreen() {
           <SectionTitle>Partida</SectionTitle>
           <div className="grid grid-cols-2 gap-2">
             <button className="btn btn-ghost" onClick={onUndo} disabled={!lastRound}>
-              <Undo2 size={20} /> Desfazer rodada
+              <Undo2 size={20} /> Desfazer
             </button>
             <button className="btn btn-ghost" onClick={() => navigate(`/partida/${matchId}/encerrar`)}>
               <Flag size={20} /> Encerrar

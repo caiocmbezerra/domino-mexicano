@@ -156,6 +156,25 @@ try {
   t = await totals();
   check(t["João"] === 30 && t.Pedro === 18 && t.Carlos === 34, `totais recalculados sem duplicar: ${JSON.stringify(t)}`);
 
+  console.log("Ordem da planilha");
+  const linhasPlanilha = async () => {
+    await page.waitForTimeout(150);
+    return (await page.locator("tbody th[scope=row]").allInnerTexts()).join(",");
+  };
+  check((await linhasPlanilha()) === "João,Pedro,Carlos", "padrão: ordem de cadastro");
+  await page.getByRole("radio", { name: "Total" }).click();
+  check((await linhasPlanilha()) === "Pedro,João,Carlos", "Total: 18, 30, 34");
+  await page.getByRole("radio", { name: "Rodada" }).click();
+  check((await linhasPlanilha()) === "Pedro,Carlos,João", "Rodada (última, R2): Pedro saiu 1º, Carlos 0 pelo 0-0, João 30");
+  await page.getByRole("radio", { name: "R1" }).click();
+  check((await linhasPlanilha()) === "João,Pedro,Carlos", "Rodada R1: João saiu 1º, Pedro 18, Carlos 34");
+  await shot("17-ordem-rodada");
+  await page.reload();
+  await page.getByText("Ordem", { exact: true }).waitFor();
+  check((await page.getByRole("radio", { name: "Rodada" }).getAttribute("aria-checked")) === "true", "ordem escolhida fica lembrada");
+  await page.getByRole("radio", { name: "Cadastro" }).click();
+  check((await linhasPlanilha()) === "João,Pedro,Carlos", "volta para a ordem de cadastro");
+
   console.log("Teste H — reabrir o app inteiro");
   const page2 = await context.newPage();
   await page2.goto(`http://localhost:${PORT}/`);
@@ -205,7 +224,7 @@ try {
   await page.getByRole("link", { name: /João, Pedro e Carlos/ }).click();
   t = await totals();
   check(t["João"] === 30 && t.Pedro === 18 && t.Carlos === 34, `primeira partida intacta no histórico: ${JSON.stringify(t)}`);
-  check(!await has(page, "Desfazer rodada"), "partida encerrada aberta somente para consulta");
+  check(!(await has(page, "Desfazer")) && !(await has(page, "Encerrar")), "partida encerrada aberta somente para consulta");
 
   console.log("Teste I — empate na interface");
   await page.goto(`http://localhost:${PORT}/#/`);

@@ -107,6 +107,8 @@ export interface AppSettings {
    * desligado por padrão — digitar os pontos continua sendo o caminho normal.
    */
   photoCount: boolean;
+  /** Última ordem escolhida para as linhas da planilha (padrão: ordem de cadastro). */
+  sheetOrder?: "cadastro" | "rodada" | "total";
 }
 
 export interface Database {

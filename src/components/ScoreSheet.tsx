@@ -2,6 +2,8 @@ import { Pencil, Trophy, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMatchRounds } from "../domain/database";
+import { updateSettings } from "../domain/operations";
+import { orderSheetRows, SHEET_ORDER_LABELS, type SheetOrder } from "../domain/sheetOrder";
 import { doubleLabel } from "../domain/doubles";
 import { cumulativeTotalsUpTo, type MatchAnalysis } from "../domain/stats";
 import type { Round } from "../domain/types";
@@ -9,17 +11,32 @@ import { useNameOf, useStore } from "../state/store";
 import { DominoTile } from "./DominoTile";
 
 /**
- * Planilha da partida: jogadores em linhas (na ordem de exibição), rodadas em colunas
- * e o somatório fixo à direita. Tocar numa rodada abre o detalhe dela.
- * Não ordena nem classifica ninguém — o ranking só aparece no encerramento.
+ * Planilha da partida: jogadores em linhas, rodadas em colunas e o somatório fixo à
+ * direita. Tocar numa rodada abre o detalhe dela. As linhas seguem a ordem de cadastro
+ * (padrão) ou, se o operador escolher, a colocação numa rodada ou o somatório. Isso só
+ * muda a visualização: o ranking oficial, com desempate, continua sendo o do encerramento.
  */
 export function ScoreSheet({ analysis }: { analysis: MatchAnalysis }) {
-  const { db } = useStore();
+  const { db, apply } = useStore();
   const nameOf = useNameOf();
   const navigate = useNavigate();
   const { match } = analysis.data;
   const rounds = getMatchRounds(db, match.id);
   const [selected, setSelected] = useState<Round | null>(null);
+  const order: SheetOrder = db.settings.sheetOrder ?? "cadastro";
+  const closedRounds = rounds.filter((r) => r.status === "closed");
+  const [orderRoundId, setOrderRoundId] = useState<string | null>(null);
+  // Rodada usada na ordem "Rodada": a escolhida, ou a última fechada.
+  const orderRound = closedRounds.find((r) => r.id === orderRoundId) ?? closedRounds[closedRounds.length - 1] ?? null;
+  const rows = orderSheetRows(
+    match.participantIds,
+    order,
+    new Map(analysis.stats.map((s) => [s.playerId, s.total])),
+    orderRound ? db.results.filter((r) => r.roundId === orderRound.id) : [],
+  );
+  // Coluna em destaque: a rodada aberta no detalhe ou a que está ordenando as linhas.
+  const destaque = (r: Round) => selected?.id === r.id || (order === "rodada" && orderRound?.id === r.id);
+  const setOrder = (o: SheetOrder) => apply((d) => updateSettings(d, { sheetOrder: o }));
   const totalOf = (id: string) => analysis.stats.find((s) => s.playerId === id)?.total ?? 0;
   const resultOf = (roundId: string, playerId: string) =>
     db.results.find((r) => r.roundId === roundId && r.playerId === playerId);
@@ -35,6 +52,37 @@ export function ScoreSheet({ analysis }: { analysis: MatchAnalysis }) {
   const sticky = "sticky z-10 bg-card";
   return (
     <>
+      <div className="mb-3 grid gap-2">
+        <div className="flex items-center gap-3">
+          <span className="label shrink-0">Ordem</span>
+          <div className="tabs flex-1" role="radiogroup" aria-label="Ordem das linhas da planilha">
+            {(Object.keys(SHEET_ORDER_LABELS) as SheetOrder[]).map((o) => (
+              <button key={o} role="radio" aria-checked={order === o} aria-selected={order === o} onClick={() => setOrder(o)}>
+                {SHEET_ORDER_LABELS[o]}
+              </button>
+            ))}
+          </div>
+        </div>
+        {order === "rodada" &&
+          (closedRounds.length ? (
+            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Rodada usada na ordem">
+              {closedRounds.map((r) => (
+                <button
+                  key={r.id}
+                  role="radio"
+                  aria-checked={orderRound?.id === r.id}
+                  aria-pressed={orderRound?.id === r.id}
+                  className="chip num !min-h-10 !px-3 text-sm"
+                  onClick={() => setOrderRoundId(r.id)}
+                >
+                  R{r.number}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted">Nenhuma rodada fechada ainda: mostrando a ordem de cadastro.</p>
+          ))}
+      </div>
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="num w-full border-separate border-spacing-0 text-center" aria-label="Planilha de pontos da partida">
@@ -47,7 +95,7 @@ export function ScoreSheet({ analysis }: { analysis: MatchAnalysis }) {
                   <th key={r.id} scope="col" className="border-b border-line p-0">
                     <button
                       className={`flex min-h-14 w-full min-w-13 flex-col items-center justify-center px-1 ${
-                        selected?.id === r.id ? "bg-accent-soft" : ""
+                        destaque(r) ? "bg-accent-soft" : ""
                       } ${r.status === "open" ? "text-accent" : ""}`}
                       aria-label={`Rodada ${r.number}, ${doubleLabel(r.openingDouble)}${r.status === "open" ? ", em andamento" : ""}`}
                       onClick={() => openColumn(r)}
@@ -65,8 +113,8 @@ export function ScoreSheet({ analysis }: { analysis: MatchAnalysis }) {
               </tr>
             </thead>
             <tbody>
-              {match.participantIds.map((pid, i) => {
-                const last = i === match.participantIds.length - 1;
+              {rows.map((pid, i) => {
+                const last = i === rows.length - 1;
                 const border = last ? "" : "border-b border-line";
                 return (
                   <tr key={pid}>
@@ -76,7 +124,7 @@ export function ScoreSheet({ analysis }: { analysis: MatchAnalysis }) {
                     {rounds.map((r) => {
                       const res = r.status === "closed" ? resultOf(r.id, pid) : undefined;
                       return (
-                        <td key={r.id} className={`p-0 ${border} ${selected?.id === r.id ? "bg-accent-soft" : ""}`}>
+                        <td key={r.id} className={`p-0 ${border} ${destaque(r) ? "bg-accent-soft" : ""}`}>
                           <button className="flex min-h-14 w-full flex-col items-center justify-center" tabIndex={-1} aria-hidden="true" onClick={() => openColumn(r)}>
                             {res ? (
                               <>
