@@ -17,7 +17,7 @@ export const APP_CONFIG = {
    * Endereço completo da função de contagem por foto na Vercel, usado pelo site do GitHub
    * Pages e pelo APK (o build da própria Vercel usa o mesmo domínio). Vazio = desligada.
    */
-  contagemUrl: "",
+  contagemUrl: "https://domino-mexicano.vercel.app/api/contar-pecas",
 } as const;
 
 /**

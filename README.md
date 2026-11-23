@@ -85,7 +85,7 @@ A função fica em `api/contar-pecas.ts` e roda na Vercel. A chave da API fica *
 1. Crie uma chave em https://platform.claude.com/settings/keys, coloque créditos e defina um **limite de gasto mensal**.
 2. Em https://vercel.com/new, importe o repositório `caiocmbezerra/domino-mexicano`. O tipo Vite é detectado sozinho.
 3. Em **Environment Variables**, cadastre `ANTHROPIC_API_KEY` com a chave e publique (Deploy).
-4. O site da Vercel já sai com a câmera disponível, porque usa `/api/contar-pecas` no mesmo domínio. Para o site do GitHub Pages e o APK, coloque o endereço completo da função em `APP_CONFIG.contagemUrl` (`src/config.ts`), por exemplo `https://domino-mexicano.vercel.app/api/contar-pecas`, ou na variável `VITE_CONTAGEM_URL` do GitHub Actions.
+4. O site da Vercel já sai com a câmera disponível, porque usa `/api/contar-pecas` no mesmo domínio. Para o site do GitHub Pages e o APK, coloque o endereço completo da função em `APP_CONFIG.contagemUrl` (`src/config.ts`), hoje `https://domino-mexicano.vercel.app/api/contar-pecas`, ou na variável `VITE_CONTAGEM_URL` do GitHub Actions.
 5. No app, o organizador liga a opção em **Ajustes → Contagem por foto**.
 
 Só três origens podem chamar a função pelo navegador: o GitHub Pages do app, o app Android e o próprio domínio da Vercel. Para acrescentar outras, use a variável `ORIGENS_PERMITIDAS`, separadas por vírgula. Fora do navegador, a proteção real contra abuso é o limite de gasto no Console da Anthropic.
