@@ -74,8 +74,16 @@ try {
   check((await btn("Contar pontos de Beto por foto").count()) === 0, "desligada: sem câmera, pontos só digitados");
   await page.getByRole("textbox", { name: "Pontos de Beto" }).fill("10");
   check((await page.getByRole("textbox", { name: "Pontos de Beto" }).inputValue()) === "10", "digitação manual funciona sem a foto");
+  // Atalho na própria rodada: "Ativar" liga a opção sem ir aos Ajustes.
+  const atalho = page.getByLabel("Ativar contagem por foto");
+  check(await atalho.isVisible(), "rodada oferece 'Contar pontos por foto — Ativar'");
+  await atalho.getByRole("button", { name: "Ativar" }).click();
+  check((await atalho.count()) === 0, "depois de ativar, o aviso some");
   await page.goto(`http://localhost:${PORT}/#/ajustes`);
-  await page.getByRole("switch", { name: "Mostrar botão de contagem por foto" }).click();
+  check(
+    (await page.getByRole("switch", { name: "Mostrar botão de contagem por foto" }).getAttribute("aria-checked")) === "true",
+    "a opção dos Ajustes fica ligada",
+  );
   await page.goto(`http://localhost:${PORT}/`);
   await btn("Continuar partida").click();
   await btn("Registrar rodada 1").click();

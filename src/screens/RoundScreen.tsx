@@ -10,7 +10,7 @@ import { BottomBar, SectionTitle, TopBar, haptic } from "../components/ui";
 import { getMatch, getMatchRounds } from "../domain/database";
 import { doubleLabel } from "../domain/doubles";
 import { formatDateTime } from "../domain/format";
-import { closeRound, editClosedRound, setRoundOpener, updateDraft } from "../domain/operations";
+import { closeRound, editClosedRound, setRoundOpener, updateDraft, updateSettings } from "../domain/operations";
 import { computeRoundResults, parsePoints } from "../domain/scoring";
 import { findTileConflicts, tileLabel, tilesSum } from "../domain/tiles";
 import { collectMatchData } from "../domain/stats";
@@ -304,6 +304,25 @@ export function RoundScreen() {
 
       {/* ------------------------------------------------ Pontos */}
       <SectionTitle>Pontos das peças na mão</SectionTitle>
+      {/* Contagem por foto disponível, mas desligada neste aparelho: oferece ligar aqui mesmo. */}
+      {PHOTO_COUNT.enabled && !db.settings.photoCount && !readOnly && (
+        <div className="card mb-3 flex items-center gap-3 p-3" aria-label="Ativar contagem por foto">
+          <Camera className="shrink-0 text-accent" size={24} />
+          <div className="min-w-0 flex-1">
+            <div className="font-extrabold">Contar pontos por foto</div>
+            <div className="text-sm text-muted">Opcional. A IA lê as pedras e você confere.</div>
+          </div>
+          <button
+            className="btn btn-secondary !min-h-11 shrink-0 !px-4"
+            onClick={() => {
+              if (apply((d) => updateSettings(d, { photoCount: true })))
+                toast.show("Câmera ativada: toque nela ao lado dos pontos.", "success");
+            }}
+          >
+            Ativar
+          </button>
+        </div>
+      )}
       <ul className="grid gap-2">
         {participants.map((id) => {
           const r = resultOf(id);
