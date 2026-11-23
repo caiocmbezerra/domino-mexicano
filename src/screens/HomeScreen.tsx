@@ -1,6 +1,7 @@
-import { BarChart3, History, Play, Plus, QrCode, Settings, Users } from "lucide-react";
+import { BarChart3, History, Play, Plus, QrCode, Settings, Users, Wifi } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { DominoTile } from "../components/DominoTile";
+import { SyncBadge } from "../components/SyncBadge";
 import { getMatchRounds, getOpenRound } from "../domain/database";
 import { doubleLabel } from "../domain/doubles";
 import { formatDateTime } from "../domain/format";
@@ -8,7 +9,7 @@ import { analyzeMatch } from "../domain/stats";
 import { useNameOf, useStore } from "../state/store";
 
 export function HomeScreen() {
-  const { db } = useStore();
+  const { db, somenteLeitura } = useStore();
   const navigate = useNavigate();
   const nameOf = useNameOf();
   const inProgress = db.matches
@@ -26,6 +27,9 @@ export function HomeScreen() {
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-black leading-tight">{db.settings.appName}</h1>
           <p className="text-sm text-muted">Placar e ranking da turma · duplo-12</p>
+          <div className="mt-1">
+            <SyncBadge />
+          </div>
         </div>
         <Link to="/ajustes" className="icon-btn" aria-label="Ajustes">
           <Settings size={24} />
@@ -72,17 +76,19 @@ export function HomeScreen() {
               className="btn btn-primary btn-lg mt-4 w-full"
               onClick={() => navigate(`/partida/${match.id}`)}
             >
-              <Play size={22} /> Continuar partida
+              <Play size={22} /> {somenteLeitura ? "Acompanhar partida" : "Continuar partida"}
             </button>
           </section>
         );
       })}
 
       <nav className="mt-5 grid gap-3">
-        <button className="btn btn-primary btn-lg w-full" onClick={() => navigate("/nova")}>
-          <Plus size={24} /> Nova partida
-        </button>
-        {inProgress.length === 0 && (
+        {!somenteLeitura && (
+          <button className="btn btn-primary btn-lg w-full" onClick={() => navigate("/nova")}>
+            <Plus size={24} /> Nova partida
+          </button>
+        )}
+        {inProgress.length === 0 && !somenteLeitura && (
           <button className="btn btn-secondary btn-lg w-full" disabled aria-describedby="sem-partida">
             <Play size={22} /> Continuar partida
           </button>
@@ -114,6 +120,9 @@ export function HomeScreen() {
             <QrCode size={22} /> Instalar
           </Link>
         </div>
+        <Link to="/turma" className="btn btn-secondary w-full">
+          <Wifi size={22} /> Placar compartilhado
+        </Link>
       </nav>
     </div>
   );

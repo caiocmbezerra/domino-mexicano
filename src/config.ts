@@ -18,6 +18,8 @@ export const APP_CONFIG = {
    * Pages e pelo APK (o build da própria Vercel usa o mesmo domínio). Vazio = desligada.
    */
   contagemUrl: "https://domino-mexicano.vercel.app/api/contar-pecas",
+  /** Servidor das funções (placar compartilhado), usado pelo site do GitHub Pages e pelo APK. */
+  apiBase: "https://domino-mexicano.vercel.app",
 } as const;
 
 /**
@@ -34,3 +36,13 @@ export const PHOTO_COUNT = {
     return Boolean(this.url);
   },
 };
+
+/**
+ * Placar compartilhado: endereço da função api/turma.ts.
+ * VITE_API_BASE no build, se definida; no build da própria Vercel, o mesmo domínio;
+ * senão, APP_CONFIG.apiBase.
+ */
+declare const __API_MESMO_DOMINIO__: boolean;
+export const TURMA_URL = `${
+  (import.meta.env.VITE_API_BASE as string | undefined) ?? (__API_MESMO_DOMINIO__ ? "" : APP_CONFIG.apiBase)
+}/api/turma`;

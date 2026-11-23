@@ -5,7 +5,9 @@ import { StoreProvider } from "./state/store";
 import { FinishScreen } from "./screens/FinishScreen";
 import { GlobalStatsScreen } from "./screens/GlobalStatsScreen";
 import { HistoryScreen } from "./screens/HistoryScreen";
+import { EntrarTurmaScreen } from "./screens/EntrarTurmaScreen";
 import { HomeScreen } from "./screens/HomeScreen";
+import { TurmaScreen } from "./screens/TurmaScreen";
 import { InstallScreen } from "./screens/InstallScreen";
 import { MatchScreen } from "./screens/MatchScreen";
 import { NewMatchScreen } from "./screens/NewMatchScreen";
@@ -38,6 +40,9 @@ export default function App() {
               <Route path="/estatisticas" element={<GlobalStatsScreen />} />
               <Route path="/ajustes" element={<SettingsScreen />} />
               <Route path="/instalar" element={<InstallScreen />} />
+              <Route path="/turma" element={<TurmaScreen />} />
+              <Route path="/entrar/:id" element={<EntrarTurmaScreen modo="acompanhar" />} />
+              <Route path="/anotar/:id/:chave" element={<EntrarTurmaScreen modo="anotar" />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Router>

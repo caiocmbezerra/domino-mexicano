@@ -1,4 +1,4 @@
-import { Download, Moon, QrCode, Sun, Upload } from "lucide-react";
+import { Download, Moon, QrCode, Sun, Upload, Wifi } from "lucide-react";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useConfirm } from "../components/ConfirmDialog";
@@ -12,7 +12,7 @@ import { migrate } from "../storage/adapter";
 import { useStore } from "../state/store";
 
 export function SettingsScreen() {
-  const { db, apply, replaceAll } = useStore();
+  const { db, apply, applyDevice, replaceAll, espaco, somenteLeitura } = useStore();
   const confirm = useConfirm();
   const toast = useToast();
   const [name, setName] = useState(db.settings.appName);
@@ -65,6 +65,8 @@ export function SettingsScreen() {
     <div className="screen">
       <TopBar title="Ajustes" back="/" />
 
+      {!somenteLeitura && (
+        <>
       <SectionTitle>Nome do aplicativo</SectionTitle>
       <form
         className="flex gap-2"
@@ -78,6 +80,18 @@ export function SettingsScreen() {
           Salvar
         </button>
       </form>
+        </>
+      )}
+
+      <SectionTitle>Placar compartilhado</SectionTitle>
+      <Link to="/turma" className="btn btn-secondary w-full">
+        <Wifi size={20} />{" "}
+        {espaco.tipo === "local"
+          ? "Compartilhar a turma com outros celulares"
+          : espaco.papel === "anotador"
+            ? `Turma ${espaco.id} · este celular anota`
+            : `Turma ${espaco.id} · só acompanhando`}
+      </Link>
 
       <SectionTitle>Contagem por foto</SectionTitle>
       <div className="card flex items-center gap-4 p-4">
@@ -93,46 +107,51 @@ export function SettingsScreen() {
           label="Mostrar botão de contagem por foto"
           checked={PHOTO_COUNT.enabled && db.settings.photoCount}
           disabled={!PHOTO_COUNT.enabled}
-          onChange={(v) => apply((d) => updateSettings(d, { photoCount: v }))}
+          onChange={(v) => applyDevice((d) => updateSettings(d, { photoCount: v }))}
         />
       </div>
 
       <SectionTitle>Aparência</SectionTitle>
       <div className="tabs" role="radiogroup" aria-label="Tema">
-        <button role="radio" aria-selected={db.settings.theme === "dark"} aria-checked={db.settings.theme === "dark"} onClick={() => apply((d) => updateSettings(d, { theme: "dark" }))}>
+        <button role="radio" aria-selected={db.settings.theme === "dark"} aria-checked={db.settings.theme === "dark"} onClick={() => applyDevice((d) => updateSettings(d, { theme: "dark" }))}>
           <Moon size={16} className="mr-1 inline" /> Escuro
         </button>
-        <button role="radio" aria-selected={db.settings.theme === "light"} aria-checked={db.settings.theme === "light"} onClick={() => apply((d) => updateSettings(d, { theme: "light" }))}>
+        <button role="radio" aria-selected={db.settings.theme === "light"} aria-checked={db.settings.theme === "light"} onClick={() => applyDevice((d) => updateSettings(d, { theme: "light" }))}>
           <Sun size={16} className="mr-1 inline" /> Claro
         </button>
       </div>
 
-      <SectionTitle>Regras padrão para novas partidas</SectionTitle>
-      <RulesEditor
-        value={db.settings.defaultMatchSettings}
-        onChange={(v) => apply((d) => updateSettings(d, { defaultMatchSettings: v }))}
-      />
-      <p className="mt-2 text-sm text-muted">
-        Partidas já iniciadas mantêm as regras com que começaram.
-      </p>
+      {!somenteLeitura && (
+        <>
+          <SectionTitle>Regras padrão para novas partidas</SectionTitle>
+          <RulesEditor
+            value={db.settings.defaultMatchSettings}
+            onChange={(v) => apply((d) => updateSettings(d, { defaultMatchSettings: v }))}
+          />
+          <p className="mt-2 text-sm text-muted">Partidas já iniciadas mantêm as regras com que começaram.</p>
+        </>
+      )}
 
       <SectionTitle>Instalar e convidar</SectionTitle>
       <Link to="/instalar" className="btn btn-secondary w-full">
         <QrCode size={20} /> Como instalar · QR code da turma
       </Link>
 
-      <SectionTitle>Dados do aparelho</SectionTitle>
+      <SectionTitle>{espaco.tipo === "local" ? "Dados do aparelho" : "Cópia de segurança"}</SectionTitle>
       <p className="mb-3 text-sm text-muted">
-        Tudo fica salvo neste aparelho, sem precisar de conta. Use o backup para guardar uma cópia ou levar
-        os dados para outro celular.
+        {espaco.tipo === "local"
+          ? "Tudo fica salvo neste aparelho, sem precisar de conta. Use o backup para guardar uma cópia ou levar os dados para outro celular."
+          : "A turma fica guardada no servidor. Você pode exportar uma cópia; importar e apagar só valem para os dados deste celular, fora da turma."}
       </p>
-      <div className="grid grid-cols-2 gap-2">
+      <div className={`grid gap-2 ${espaco.tipo === "local" ? "grid-cols-2" : "grid-cols-1"}`}>
         <button className="btn btn-secondary" onClick={exportBackup}>
           <Download size={20} /> Exportar
         </button>
-        <button className="btn btn-secondary" onClick={() => fileRef.current?.click()}>
-          <Upload size={20} /> Importar
-        </button>
+        {espaco.tipo === "local" && (
+          <button className="btn btn-secondary" onClick={() => fileRef.current?.click()}>
+            <Upload size={20} /> Importar
+          </button>
+        )}
       </div>
       <input
         ref={fileRef}
@@ -145,9 +164,11 @@ export function SettingsScreen() {
           e.target.value = "";
         }}
       />
-      <button className="btn btn-ghost mt-2 w-full text-danger" onClick={eraseAll}>
-        Apagar todos os dados
-      </button>
+      {espaco.tipo === "local" && (
+        <button className="btn btn-ghost mt-2 w-full text-danger" onClick={eraseAll}>
+          Apagar todos os dados
+        </button>
+      )}
 
       <p className="mt-8 text-center text-xs text-muted">
         Conjunto duplo-12 · {APP_CONFIG.minPlayers} a {APP_CONFIG.maxPlayers} jogadores · versão 1.0

@@ -13,13 +13,14 @@ import { useStore } from "../state/store";
 
 export function FinishScreen() {
   const { matchId = "" } = useParams();
-  const { db, apply } = useStore();
+  const { db, apply, somenteLeitura } = useStore();
   const navigate = useNavigate();
   const confirm = useConfirm();
   const toast = useToast();
 
   const match = getMatch(db, matchId);
   if (!match) return <Navigate to="/" replace />;
+  if (somenteLeitura) return <Navigate to={`/partida/${matchId}`} replace />;
   if (match.status === "finished") return <Navigate to={`/partida/${matchId}`} replace />;
   const analysis = analyzeMatch(db, matchId)!;
   const open = getOpenRound(db, matchId);

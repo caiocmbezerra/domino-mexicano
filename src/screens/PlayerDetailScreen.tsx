@@ -20,7 +20,7 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 
 export function PlayerDetailScreen() {
   const { playerId = "" } = useParams();
-  const { db, apply } = useStore();
+  const { db, apply, somenteLeitura } = useStore();
   const navigate = useNavigate();
   const confirm = useConfirm();
   const toast = useToast();
@@ -60,7 +60,7 @@ export function PlayerDetailScreen() {
     <div className="screen">
       <TopBar title={player.name} subtitle={`Cadastrado em ${formatDate(player.createdAt)}`} back="/jogadores" />
 
-      {editing ? (
+      {somenteLeitura ? null : editing ? (
         <form
           className="mt-2 flex gap-2"
           onSubmit={(e) => {
@@ -86,7 +86,7 @@ export function PlayerDetailScreen() {
           </button>
         </div>
       )}
-      {hasHistory && !editing && (
+      {hasHistory && !editing && !somenteLeitura && (
         <p className="mt-2 text-sm text-muted">Jogadores com partidas registradas não podem ser excluídos, para preservar o histórico.</p>
       )}
 

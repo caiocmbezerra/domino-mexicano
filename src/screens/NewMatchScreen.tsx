@@ -1,6 +1,6 @@
 import { ArrowDown, ArrowUp, Play, Plus, X } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { AddPlayerForm } from "../components/AddPlayerForm";
 import { RulesEditor } from "../components/RulesEditor";
 import { BottomBar, SectionTitle, TopBar, haptic } from "../components/ui";
@@ -10,7 +10,7 @@ import type { ID, MatchSettings } from "../domain/types";
 import { useNameOf, useStore } from "../state/store";
 
 export function NewMatchScreen() {
-  const { db, run } = useStore();
+  const { db, run, somenteLeitura } = useStore();
   const navigate = useNavigate();
   const nameOf = useNameOf();
   const [selected, setSelected] = useState<ID[]>([]);
@@ -41,6 +41,8 @@ export function NewMatchScreen() {
     });
     if (id) navigate(`/partida/${id}/abertura`, { replace: true });
   };
+
+  if (somenteLeitura) return <Navigate to="/" replace />;
 
   return (
     <div className="screen">

@@ -10,7 +10,7 @@ import type { Match } from "../domain/types";
 import { useNameOf, useStore } from "../state/store";
 
 export function HistoryScreen() {
-  const { db, apply } = useStore();
+  const { db, apply, somenteLeitura } = useStore();
   const confirm = useConfirm();
   const toast = useToast();
   const nameOf = useNameOf();
@@ -49,9 +49,11 @@ export function HistoryScreen() {
             )}
           </div>
         </Link>
-        <button className="icon-btn m-2 self-center text-danger" aria-label="Excluir partida" onClick={() => onDelete(m)}>
-          <Trash2 size={20} />
-        </button>
+        {!somenteLeitura && (
+          <button className="icon-btn m-2 self-center text-danger" aria-label="Excluir partida" onClick={() => onDelete(m)}>
+            <Trash2 size={20} />
+          </button>
+        )}
       </li>
     );
   };

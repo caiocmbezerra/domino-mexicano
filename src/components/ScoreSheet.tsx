@@ -17,7 +17,7 @@ import { DominoTile } from "./DominoTile";
  * muda a visualização: o ranking oficial, com desempate, continua sendo o do encerramento.
  */
 export function ScoreSheet({ analysis }: { analysis: MatchAnalysis }) {
-  const { db, apply } = useStore();
+  const { db, applyDevice, somenteLeitura } = useStore();
   const nameOf = useNameOf();
   const navigate = useNavigate();
   const { match } = analysis.data;
@@ -36,7 +36,7 @@ export function ScoreSheet({ analysis }: { analysis: MatchAnalysis }) {
   );
   // Coluna em destaque: a rodada aberta no detalhe ou a que está ordenando as linhas.
   const destaque = (r: Round) => selected?.id === r.id || (order === "rodada" && orderRound?.id === r.id);
-  const setOrder = (o: SheetOrder) => apply((d) => updateSettings(d, { sheetOrder: o }));
+  const setOrder = (o: SheetOrder) => applyDevice((d) => updateSettings(d, { sheetOrder: o }));
   const totalOf = (id: string) => analysis.stats.find((s) => s.playerId === id)?.total ?? 0;
   const resultOf = (roundId: string, playerId: string) =>
     db.results.find((r) => r.roundId === roundId && r.playerId === playerId);
@@ -161,7 +161,7 @@ export function ScoreSheet({ analysis }: { analysis: MatchAnalysis }) {
 
 /** Detalhe de uma rodada fechada: abertura, ordem de saída, pontos e total acumulado. */
 function RoundDetailSheet({ analysis, round, onClose }: { analysis: MatchAnalysis; round: Round; onClose: () => void }) {
-  const { db } = useStore();
+  const { db, somenteLeitura } = useStore();
   const nameOf = useNameOf();
   const navigate = useNavigate();
   const { match } = analysis.data;
@@ -231,7 +231,7 @@ function RoundDetailSheet({ analysis, round, onClose }: { analysis: MatchAnalysi
         </table>
 
         <div className="mt-5 grid gap-2">
-          {match.status === "in_progress" && (
+          {match.status === "in_progress" && !somenteLeitura && (
             <button className="btn btn-secondary w-full" onClick={() => navigate(`/partida/${match.id}/rodada/${round.id}`)}>
               <Pencil size={18} /> Corrigir rodada {round.number}
             </button>

@@ -13,7 +13,7 @@ import { useNameOf, useStore } from "../state/store";
 
 export function OpeningScreen() {
   const { matchId = "" } = useParams();
-  const { db, apply, run } = useStore();
+  const { db, apply, run, somenteLeitura } = useStore();
   const navigate = useNavigate();
   const confirm = useConfirm();
   const nameOf = useNameOf();
@@ -24,6 +24,7 @@ export function OpeningScreen() {
 
   const match = getMatch(db, matchId);
   if (!match) return <Navigate to="/" replace />;
+  if (somenteLeitura) return <Navigate to={`/partida/${matchId}`} replace />;
   if (match.status !== "in_progress") return <Navigate to={`/partida/${matchId}`} replace />;
   const open = getOpenRound(db, matchId);
   if (open) return <Navigate to={`/partida/${matchId}/rodada/${open.id}`} replace />;

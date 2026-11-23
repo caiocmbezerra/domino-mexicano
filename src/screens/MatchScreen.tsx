@@ -14,6 +14,7 @@ import { undoLastRound } from "../domain/operations";
 import { analyzeMatch } from "../domain/stats";
 import { useNameOf, useStore } from "../state/store";
 import { Podium } from "../components/Podium";
+import { SyncBadge } from "../components/SyncBadge";
 import { ScoreSheet } from "../components/ScoreSheet";
 
 type Tab = "ranking" | "planilha" | "saidas" | "estatisticas";
@@ -32,7 +33,7 @@ const TABS_FINISHED: { id: Tab; label: string }[] = [
 
 export function MatchScreen() {
   const { matchId = "" } = useParams();
-  const { db, apply } = useStore();
+  const { db, apply, somenteLeitura } = useStore();
   const navigate = useNavigate();
   const confirm = useConfirm();
   const toast = useToast();
@@ -77,6 +78,7 @@ export function MatchScreen() {
             : `${match.participantIds.length} jogadores · iniciada ${formatDateTime(match.startedAt)}`
         }
         back="/"
+        right={finished ? undefined : <SyncBadge />}
       />
 
       {finished && (
@@ -145,7 +147,13 @@ export function MatchScreen() {
         </>
       )}
 
-      {!finished && (
+      {!finished && somenteLeitura && (
+        <p className="mt-6 text-center text-sm text-muted">
+          Acompanhando ao vivo: a planilha se atualiza sozinha conforme o anotador lança.
+        </p>
+      )}
+
+      {!finished && !somenteLeitura && (
         <>
           <SectionTitle>Partida</SectionTitle>
           <div className="grid grid-cols-2 gap-2">

@@ -120,13 +120,30 @@ O APK é assinado com uma chave **fixa** (`android/app/instalacao-direta.keystor
 - **Google Play:** crie a conta de desenvolvedor (taxa única). Gere uma chave de envio **própria**, guardada fora do repositório (nunca use a chave de instalação direta), e um AAB com `cd android && ./gradlew bundleRelease`, assinado com essa chave. Depois preencha a ficha da loja (política de privacidade, capturas de tela, classificação) e envie para revisão.
 - **App Store (iPhone):** exige Mac com Xcode e conta Apple Developer (anual): `npm i -D @capacitor/ios@8.5.0 && npx cap add ios && npx cap open ios` → Archive → App Store Connect. Até lá, no iPhone, use a instalação pelo navegador.
 
-## Sincronização entre aparelhos (opcional, futuro)
+## Placar compartilhado (turma)
 
-O armazenamento passa pela interface `StorageAdapter` (`src/storage/adapter.ts`). Para sincronizar:
+Um celular **anota**, o do organizador, e os outros **acompanham ao vivo**. O que fica compartilhado é a turma inteira: jogadores, partidas, histórico e estatísticas.
 
-1. Crie um projeto no Supabase e aplique `supabase/schema.sql`. As tabelas espelham o modelo, com chaves estrangeiras, um carroção por partida e uma rodada aberta por vez.
-2. Implemente um `SupabaseAdapter` com a mesma interface e passe-o ao `StoreProvider`.
-3. Mantenha o uso local como padrão: o login só deve ser exigido para quem quiser sincronizar.
+- **Compartilhar:** tela inicial → **Placar compartilhado** → **Compartilhar a turma**. Os dados deste celular vão para o servidor, e aparecem o código da turma e o QR code.
+- **Acompanhar:** escanear o QR code (abre `#/entrar/CÓDIGO`) ou digitar o código. Quem acompanha não lança, não corrige e não usa a câmera; o app recusa qualquer alteração.
+- **Outro celular anotar:** QR code de anotador (`#/anotar/CÓDIGO/CHAVE`), mostrado só para quem vai anotar.
+- **Sem internet:** o anotador continua lançando, e o envio acontece quando a conexão volta. Quem acompanha mostra "Sem conexão".
+- **Preferências de cada aparelho** (tema, câmera, ordem da planilha) não são compartilhadas.
+- **Os dados próprios de cada celular** ficam guardados à parte. "Parar de acompanhar" ou "Parar de anotar" volta para eles.
+
+Como funciona: a função `api/turma.ts` (Vercel) guarda o documento da turma num Redis (Upstash, integração da Vercel), com número de versão.
+- Quem grava informa a versão em que se baseou. Se outra gravação passou na frente, o app refaz as próprias alterações sobre a versão atual e grava de novo, sem perder nada.
+- A chave de anotador fica guardada só como hash.
+- Quem acompanha consulta a cada 4 segundos, e a resposta é leve quando nada mudou.
+
+### Ativar (Vercel)
+
+1. No projeto da Vercel: **Storage** → **Create Database** → **Upstash for Redis** (plano gratuito) → conecte ao projeto **domino-mexicano**. As variáveis `KV_REST_API_URL` e `KV_REST_API_TOKEN` são criadas sozinhas.
+2. Faça um **Redeploy** do último deploy para as variáveis valerem.
+
+Testes:
+- `src/sync/turma.test.ts` cobre as regras: preferências do aparelho e refazer alterações num conflito.
+- `NODE_PATH=$(npm root -g) node e2e/turma-compartilhada.mjs` testa no navegador dois celulares (um anota, outro acompanha) contra um Redis de verdade, incluindo queda de internet, outro anotador e saída da turma. Requer `redis-server`.
 
 ## Usando no Lovable
 

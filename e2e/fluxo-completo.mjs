@@ -254,7 +254,7 @@ try {
   await page.getByRole("link", { name: "Instalar" }).click();
   check(await has(page, "Convidar a turma"), "tela Como instalar abre pela tela inicial");
   check(
-    await page.getByRole("img", { name: "QR code do endereço https://caiocmbezerra.github.io/domino-mexicano/" }).isVisible(),
+    await page.getByRole("img", { name: "QR code do endereço https://caiocmbezerra.github.io/domino-mexicano/#/instalar" }).isVisible(),
     "QR code com o endereço público do app",
   );
   await page.getByRole("tab", { name: "iPhone" }).click();

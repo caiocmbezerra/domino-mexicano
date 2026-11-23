@@ -18,7 +18,6 @@ export interface KeyValueStorage {
   setItem(key: string, value: string): void;
 }
 
-/** Garante a forma esperada do banco lido do armazenamento (dados antigos ou corrompidos). */
 /**
  * O 0-0 deixou de ser critério de desempate (só marca zero na rodada). Partidas e ajustes
  * salvos com ele passam a desempatar por vitórias de rodada, sem repetir critérios.
@@ -33,6 +32,7 @@ function migrarDesempate(lista: unknown): TieBreaker[] {
   return saida;
 }
 
+/** Garante a forma esperada do banco lido do armazenamento (dados antigos ou corrompidos). */
 export function migrate(raw: unknown): Database {
   const base = emptyDatabase();
   if (!raw || typeof raw !== "object") return base;

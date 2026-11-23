@@ -6,15 +6,19 @@ import { computeCareerStats } from "../domain/stats";
 import { useStore } from "../state/store";
 
 export function PlayersScreen() {
-  const { db } = useStore();
+  const { db, somenteLeitura } = useStore();
   const career = new Map(computeCareerStats(db).map((c) => [c.playerId, c]));
   const players = [...db.players].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 
   return (
     <div className="screen">
       <TopBar title="Jogadores" subtitle={`${players.length} cadastrados`} back="/" />
-      <SectionTitle>Cadastrar jogador</SectionTitle>
-      <AddPlayerForm />
+      {!somenteLeitura && (
+        <>
+          <SectionTitle>Cadastrar jogador</SectionTitle>
+          <AddPlayerForm />
+        </>
+      )}
 
       <SectionTitle>Turma</SectionTitle>
       {players.length === 0 ? (

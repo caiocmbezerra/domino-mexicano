@@ -54,6 +54,8 @@ export function InstallScreen() {
   }, []);
 
   const url = APP_CONFIG.publicUrl;
+  // O QR abre direto nesta página, com o passo a passo do aparelho de quem escaneou.
+  const urlQr = `${url}#/instalar`;
   const convite = `Placar do Dominó Mexicano da turma: ${url}\nNo iPhone, abra no Safari e toque em Compartilhar → Adicionar à Tela de Início. No Android, abra no Chrome e toque em ⋮ → Instalar app.`;
   const copiar = async () => {
     try {
@@ -77,7 +79,7 @@ export function InstallScreen() {
 
       <SectionTitle>Convidar a turma</SectionTitle>
       <section className="card flex flex-col items-center gap-3 p-5 text-center">
-        <QrCode text={url} label={`QR code do endereço ${url}`} />
+        <QrCode text={urlQr} label={`QR code do endereço ${urlQr}`} />
         <p className="text-sm text-muted">Aponte a câmera do celular para o código, ou envie o link.</p>
         <p className="num break-all rounded-lg bg-surface px-3 py-2 text-sm font-bold">{url}</p>
         <div className="grid w-full grid-cols-2 gap-2">

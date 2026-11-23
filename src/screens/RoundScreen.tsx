@@ -19,7 +19,7 @@ import { useNameOf, useStore } from "../state/store";
 
 export function RoundScreen() {
   const { matchId = "", roundId = "" } = useParams();
-  const { db, apply } = useStore();
+  const { db, apply, applyDevice, somenteLeitura } = useStore();
   const navigate = useNavigate();
   const confirm = useConfirm();
   const toast = useToast();
@@ -28,7 +28,8 @@ export function RoundScreen() {
   const match = getMatch(db, matchId);
   const round = db.rounds.find((r) => r.id === roundId && r.matchId === matchId);
   const isOpen = round?.status === "open";
-  const readOnly = match?.status !== "in_progress";
+  // Partida encerrada, ou este aparelho só acompanha a turma: apenas consulta.
+  const readOnly = match?.status !== "in_progress" || somenteLeitura;
 
   // Rodada aberta: o rascunho vive no banco (salvo a cada toque).
   // Rodada fechada: a correção é local até ser confirmada.
@@ -315,7 +316,7 @@ export function RoundScreen() {
           <button
             className="btn btn-secondary !min-h-11 shrink-0 !px-4"
             onClick={() => {
-              if (apply((d) => updateSettings(d, { photoCount: true })))
+              if (applyDevice((d) => updateSettings(d, { photoCount: true })))
                 toast.show("Câmera ativada: toque nela ao lado dos pontos.", "success");
             }}
           >
@@ -423,7 +424,13 @@ export function RoundScreen() {
           ))}
         </div>
       )}
-      {readOnly && rounds.length > 0 && <p className="mt-4 text-sm text-muted">Partida encerrada: consulta somente leitura.</p>}
+      {readOnly && rounds.length > 0 && (
+        <p className="mt-4 text-sm text-muted">
+          {somenteLeitura && match.status === "in_progress"
+            ? "Acompanhando ao vivo: os pontos aparecem aqui conforme o anotador lança."
+            : "Partida encerrada: consulta somente leitura."}
+        </p>
+      )}
 
       {photoFor && (
         <PhotoCountSheet
