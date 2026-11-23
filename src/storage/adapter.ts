@@ -1,6 +1,6 @@
 import { APP_CONFIG } from "../config";
 import { emptyDatabase } from "../domain/database";
-import type { Database } from "../domain/types";
+import type { Database, TieBreaker } from "../domain/types";
 
 /**
  * Camada de armazenamento. A implementação padrão grava no próprio aparelho
@@ -19,6 +19,20 @@ export interface KeyValueStorage {
 }
 
 /** Garante a forma esperada do banco lido do armazenamento (dados antigos ou corrompidos). */
+/**
+ * O 0-0 deixou de ser critério de desempate (só marca zero na rodada). Partidas e ajustes
+ * salvos com ele passam a desempatar por vitórias de rodada, sem repetir critérios.
+ */
+function migrarDesempate(lista: unknown): TieBreaker[] {
+  const validos: TieBreaker[] = ["wins", "lowestMaxRound"];
+  const saida: TieBreaker[] = [];
+  for (const c of Array.isArray(lista) ? lista : []) {
+    const novo = (c === "zeroDoubles" ? "wins" : c) as TieBreaker;
+    if (validos.includes(novo) && !saida.includes(novo)) saida.push(novo);
+  }
+  return saida;
+}
+
 export function migrate(raw: unknown): Database {
   const base = emptyDatabase();
   if (!raw || typeof raw !== "object") return base;
@@ -26,7 +40,10 @@ export function migrate(raw: unknown): Database {
   return {
     schemaVersion: 1,
     players: Array.isArray(r.players) ? r.players : [],
-    matches: Array.isArray(r.matches) ? r.matches : [],
+    matches: (Array.isArray(r.matches) ? r.matches : []).map((m) => ({
+      ...m,
+      settings: { ...m.settings, tieBreakers: migrarDesempate(m.settings?.tieBreakers) },
+    })),
     rounds: Array.isArray(r.rounds) ? r.rounds : [],
     results: Array.isArray(r.results) ? r.results : [],
     settings: {
@@ -35,6 +52,9 @@ export function migrate(raw: unknown): Database {
       defaultMatchSettings: {
         ...base.settings.defaultMatchSettings,
         ...(r.settings?.defaultMatchSettings ?? {}),
+        tieBreakers: r.settings?.defaultMatchSettings
+          ? migrarDesempate(r.settings.defaultMatchSettings.tieBreakers)
+          : base.settings.defaultMatchSettings.tieBreakers,
       },
     },
   };

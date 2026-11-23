@@ -50,7 +50,7 @@ supabase/schema.sql      esquema preparado para sincronizar entre aparelhos (opc
 - **Nada é armazenado em duplicidade.** O total de cada jogador, o ranking, as estatísticas e a lista de carroções já utilizados são sempre derivados das rodadas e dos resultados. Por isso, corrigir uma rodada recalcula tudo sem duplicar pontos, e desfazer uma rodada devolve o carroção dela à lista de elegíveis.
 - **O carroção só é marcado como usado na confirmação da abertura.** Navegar na busca ("Ninguém tem" / "Voltar") não consome nada.
 - **O rascunho da rodada é salvo a cada toque**: ordem de saída, pontos e 0-0. Se o app fechar no meio da rodada, ela é retomada de onde parou.
-- **Regras da turma configuráveis por partida**: a regra "0-0 marca zero" vem ativada por padrão, e os critérios de desempate (0-0, vitórias, menor pior rodada) podem ser ligados e ordenados. Sem critério que desempate, os jogadores ficam **empatados** na mesma posição. Nunca há desempate arbitrário.
+- **Regras da turma configuráveis por partida**: a regra "0-0 marca zero" vem ativada por padrão. O desempate padrão é **mais vitórias de rodada** (quem bateu), e dá para acrescentar "menor pior rodada". O 0-0 não conta para desempate nem para estatística: a única vantagem dele é marcar zero na rodada. Sem critério que desempate, os jogadores ficam **empatados** na mesma posição. Nunca há desempate arbitrário.
 - **Durante a partida, a tela principal é uma planilha**: jogadores em linhas (na ordem de exibição), rodadas em colunas e o somatório fixo à direita. Tocar numa rodada abre o detalhe dela (ordem de saída, pontos, acumulado) com a opção de corrigir. **Não há classificação durante o jogo**: ranking por pontos, ranking de saídas e recordes aparecem só no encerramento.
 - **Partidas encerradas são somente leitura.** Para apagar uma partida é preciso confirmar.
 - O nome do app pode ser alterado em `src/config.ts` (padrão) ou na tela **Ajustes**.
@@ -60,7 +60,7 @@ supabase/schema.sql      esquema preparado para sincronizar entre aparelhos (opc
 | Situação | Pontos contabilizados |
 |---|---|
 | 1º a sair (vencedor da rodada) | 0 |
-| Terminou com o 0-0 (regra ativa) | 0. A ocorrência fica registrada à parte e serve de desempate |
+| Terminou com o 0-0 (regra ativa) | 0. É a única vantagem: não conta para desempate nem estatística |
 | Venceu **e** tinha o 0-0 | 0, sem benefício extra |
 | Demais | soma informada das peças (inteiro ≥ 0) |
 

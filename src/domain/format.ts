@@ -62,8 +62,6 @@ export function buildResultText(
   }
   const h = recordNames(records.highestTotal, nameOf);
   if (h) rec.push(`* Maior pontuação acumulada: ${h}, ${pointsLabel(records.highestTotal!.value)}.`);
-  const z = recordNames(records.mostZeroDoubles, nameOf);
-  if (z) rec.push(`* Mais vezes com o 0-0: ${z} (${records.mostZeroDoubles!.value}).`);
   const o = recordNames(records.mostOpens, nameOf);
   if (o) rec.push(`* Mais aberturas: ${o} (${records.mostOpens!.value}).`);
 

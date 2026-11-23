@@ -100,7 +100,7 @@ export function PlayerDetailScreen() {
         <Stat label="maior rodada" value={c.highestRound} />
         <Stat label="pontos totais" value={c.totalPoints} />
         <Stat label="aberturas" value={c.opens} />
-        <Stat label="com 0-0" value={c.zeroDoubles} />
+        <Stat label="% rodadas vencidas" value={`${c.roundsPlayed ? Math.round((c.roundWins / c.roundsPlayed) * 100) : 0}%`} />
       </div>
 
       <SectionTitle>Participações</SectionTitle>

@@ -19,7 +19,6 @@ export interface PlayerStats {
   maxRound: number;
   /** Números das rodadas em que ocorreu a maior pontuação individual do jogador. */
   maxRoundNumbers: number[];
-  zeroDoubles: number;
   opens: number;
   /** Posição média de saída (quem ficou com peças conta como logo após o último que saiu). */
   averageExitPosition: number | null;
@@ -69,7 +68,6 @@ export function computePlayerStats(data: MatchData): PlayerStats[] {
               .map((r) => roundNumber.get(r.roundId) ?? 0)
               .sort((a, b) => a - b)
           : [],
-      zeroDoubles: mine.filter((r) => r.hadZeroDouble).length,
       opens: data.closedRounds.filter((r) => r.openerId === playerId).length,
       averageExitPosition: positions.length
         ? positions.reduce((a, b) => a + b, 0) / positions.length
@@ -81,13 +79,11 @@ export function computePlayerStats(data: MatchData): PlayerStats[] {
 // ---------------------------------------------------------------- Ranking por pontos
 
 export const TIE_BREAKER_LABELS: Record<TieBreaker, string> = {
-  zeroDoubles: "Mais vezes com o 0-0",
-  wins: "Mais vitórias de rodada",
+  wins: "Mais vitórias de rodada (quem bateu)",
   lowestMaxRound: "Menor pontuação máxima em uma rodada",
 };
 
 export const TIE_BREAKER_SHORT: Record<TieBreaker, string> = {
-  zeroDoubles: "0-0",
   wins: "vitórias",
   lowestMaxRound: "menor pior rodada",
 };
@@ -95,8 +91,6 @@ export const TIE_BREAKER_SHORT: Record<TieBreaker, string> = {
 /** Negativo se `a` fica à frente de `b` pelo critério. */
 function compareBy(criterion: TieBreaker, a: PlayerStats, b: PlayerStats): number {
   switch (criterion) {
-    case "zeroDoubles":
-      return b.zeroDoubles - a.zeroDoubles;
     case "wins":
       return b.wins - a.wins;
     case "lowestMaxRound":
@@ -192,7 +186,6 @@ export interface MatchRecords {
   mostWins: Record_ | null;
   mostFirsts: Record_ | null;
   mostOpens: Record_ | null;
-  mostZeroDoubles: Record_ | null;
 }
 
 /** Todos os jogadores que empatam no valor extremo. `requirePositive` evita "recorde" de zero. */
@@ -230,7 +223,6 @@ export function computeRecords(data: MatchData, stats: PlayerStats[]): MatchReco
     mostWins: extreme(stats, (s) => s.wins, "max", true),
     mostFirsts: extreme(stats, (s) => s.firsts, "max", true),
     mostOpens: extreme(stats, (s) => s.opens, "max", true),
-    mostZeroDoubles: extreme(stats, (s) => s.zeroDoubles, "max", true),
   };
 }
 
@@ -269,7 +261,6 @@ export interface CareerStats {
   roundWins: number;
   totalPoints: number;
   averagePerRound: number;
-  zeroDoubles: number;
   opens: number;
   highestRound: number;
 }
@@ -287,7 +278,6 @@ export function computeCareerStats(db: Database): CareerStats[] {
         roundWins: 0,
         totalPoints: 0,
         averagePerRound: 0,
-        zeroDoubles: 0,
         opens: 0,
         highestRound: 0,
       },
@@ -305,7 +295,6 @@ export function computeCareerStats(db: Database): CareerStats[] {
       c.roundsPlayed += s.roundsPlayed;
       c.roundWins += s.wins;
       c.totalPoints += s.total;
-      c.zeroDoubles += s.zeroDoubles;
       c.opens += s.opens;
       c.highestRound = Math.max(c.highestRound, s.maxRound);
     }

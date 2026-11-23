@@ -50,7 +50,7 @@ export function PointsRanking({ analysis, compact = false }: { analysis: MatchAn
                 <Mini label="rodadas" value={e.stats.roundsPlayed} />
                 <Mini label="vitórias" value={e.stats.wins} />
                 <Mini label="maior rodada" value={e.stats.maxRound} />
-                <Mini label="com 0-0" value={e.stats.zeroDoubles} />
+                <Mini label="média/rodada" value={e.stats.average.toFixed(1)} />
                 <Mini label="1º a sair" value={e.stats.firsts} />
                 <Mini label="2º a sair" value={e.stats.seconds} />
                 <Mini label="3º a sair" value={e.stats.thirds} />
@@ -143,7 +143,6 @@ export function RecordsList({ analysis }: { analysis: MatchAnalysis }) {
       <RecordCard icon={<Medal />} title="Mais vitórias de rodada" who={names(r.mostWins)} value={r.mostWins ? `${r.mostWins.value}×` : undefined} />
       <RecordCard icon={<Medal />} title="Mais vezes o 1º a sair" who={names(r.mostFirsts)} value={r.mostFirsts ? `${r.mostFirsts.value}×` : undefined} />
       <RecordCard icon={<Medal />} title="Mais aberturas de rodada" who={names(r.mostOpens)} value={r.mostOpens ? `${r.mostOpens.value}×` : undefined} />
-      <RecordCard icon={<Medal />} title="Mais vezes com o 0-0" who={names(r.mostZeroDoubles)} value={r.mostZeroDoubles ? `${r.mostZeroDoubles.value}×` : undefined} />
     </div>
   );
 }
@@ -170,8 +169,6 @@ export function PlayerStatsCards({ analysis, ranked = true }: { analysis: MatchA
               value={s.maxRound}
             />
             <Mini label="aberturas" value={s.opens} />
-            <Mini label="com 0-0" value={s.zeroDoubles} />
-            <Mini label="rodadas" value={s.roundsPlayed} />
           </div>
         </div>
       ))}

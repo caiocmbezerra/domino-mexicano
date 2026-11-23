@@ -3,7 +3,7 @@ import { TIE_BREAKER_LABELS } from "../domain/stats";
 import type { MatchSettings, TieBreaker } from "../domain/types";
 import { Switch } from "./ui";
 
-const ALL: TieBreaker[] = ["zeroDoubles", "wins", "lowestMaxRound"];
+const ALL: TieBreaker[] = ["wins", "lowestMaxRound"];
 
 /** Configuração das regras da turma: regra do 0-0 e critérios de desempate. */
 export function RulesEditor({ value, onChange }: { value: MatchSettings; onChange: (v: MatchSettings) => void }) {
@@ -23,7 +23,7 @@ export function RulesEditor({ value, onChange }: { value: MatchSettings; onChang
         <div className="flex-1">
           <div className="font-extrabold">Quem termina com o 0-0 marca zero</div>
           <div className="text-sm text-muted">
-            Regra da turma. A ocorrência é registrada à parte e pode servir de desempate.
+            Regra da turma. É a única vantagem do 0-0: não conta para desempate nem estatística.
           </div>
         </div>
         <Switch

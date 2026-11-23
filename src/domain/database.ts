@@ -4,7 +4,7 @@ import type { Database, MatchSettings } from "./types";
 export function defaultMatchSettings(): MatchSettings {
   return {
     zeroDoubleScoresZero: true,
-    tieBreakers: ["zeroDoubles"],
+    tieBreakers: ["wins"],
     highestDouble: APP_CONFIG.highestDouble,
   };
 }

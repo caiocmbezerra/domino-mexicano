@@ -23,7 +23,7 @@ import type { Database, ID, RoundDraft } from "./types";
 
 const settings = (over: Partial<Database["settings"]["defaultMatchSettings"]> = {}) => ({
   zeroDoubleScoresZero: true,
-  tieBreakers: ["zeroDoubles" as const],
+  tieBreakers: ["wins" as const],
   highestDouble: 12,
   ...over,
 });
@@ -181,7 +181,7 @@ describe("Teste C — Pontuação", () => {
 });
 
 describe("Teste D — Carroção de zero", () => {
-  it("quem termina com o 0-0 recebe zero e a ocorrência fica registrada para desempate", () => {
+  it("quem termina com o 0-0 recebe zero (única vantagem: não conta para desempate nem estatística)", () => {
     const { db: db0, matchId, ids } = setup(["Ana", "Beto", "Caio"]);
     const r1 = playRound(
       db0,
@@ -193,8 +193,9 @@ describe("Teste D — Carroção de zero", () => {
     const beto = getRoundResults(r1.db, r1.roundId).find((r) => r.playerId === ids.Beto)!;
     expect(beto).toMatchObject({ countedPoints: 0, remainingPoints: 40, hadZeroDouble: true, isWinner: false });
     const stats = analyzeMatch(r1.db, matchId)!.stats.find((s) => s.playerId === ids.Beto)!;
-    expect(stats.zeroDoubles).toBe(1);
     expect(stats.total).toBe(0);
+    expect(stats.wins).toBe(0); // ter o 0-0 não é vitória: vence quem bate
+    expect("zeroDoubles" in stats).toBe(false);
   });
 
   it("o 0-0 dispensa digitar os pontos; vencedor com 0-0 continua com zero, sem benefício extra", () => {
@@ -343,23 +344,25 @@ describe("Teste I — Empate", () => {
     expect(ranking[2]).toMatchObject({ position: 2, tied: true });
   });
 
-  it("critério do 0-0 desempata; se persistir, continua empatado", () => {
+  it("desempate por vitórias de rodada (quem bateu); o 0-0 não desempata; se persistir, empate", () => {
     const { db: db0, matchId, ids } = setup(["Ana", "Beto", "Caio", "Davi"]);
+    // R1: Davi bate; Ana fica com o 0-0 (conta 0, mas não ajuda no desempate).
     let db = playRound(
       db0,
       matchId,
       12,
       ids.Davi,
-      draft([ids.Davi], { [ids.Ana]: 10, [ids.Beto]: 0, [ids.Caio]: 10 }, [ids.Beto]),
+      draft([ids.Davi], { [ids.Ana]: 30, [ids.Beto]: 15, [ids.Caio]: 10 }, [ids.Ana]),
     ).db;
-    db = playRound(db, matchId, 11, ids.Davi, draft([ids.Davi], { [ids.Ana]: 5, [ids.Beto]: 15, [ids.Caio]: 5 })).db;
-    // Ana 15, Beto 15 (com um 0-0), Caio 15
+    // R2: Beto bate.
+    db = playRound(db, matchId, 11, ids.Beto, draft([ids.Beto], { [ids.Ana]: 15, [ids.Caio]: 5, [ids.Davi]: 20 })).db;
+    // Totais: Ana 15 (com um 0-0), Beto 15 (1 vitória), Caio 15, Davi 20 (1 vitória)
     const ranking = analyzeMatch(db, matchId)!.ranking;
     const pos = (id: ID) => ranking.find((e) => e.stats.playerId === id)!;
-    expect(pos(ids.Davi).position).toBe(1);
-    expect(pos(ids.Beto)).toMatchObject({ position: 2, tied: false, tiedOnPoints: true, decidedBy: "zeroDoubles" });
-    expect(pos(ids.Ana)).toMatchObject({ position: 3, tied: true, tiedOnPoints: true });
-    expect(pos(ids.Caio)).toMatchObject({ position: 3, tied: true, tiedOnPoints: true });
+    expect(pos(ids.Beto)).toMatchObject({ position: 1, tied: false, tiedOnPoints: true, decidedBy: "wins" });
+    expect(pos(ids.Ana)).toMatchObject({ position: 2, tied: true, tiedOnPoints: true });
+    expect(pos(ids.Caio)).toMatchObject({ position: 2, tied: true, tiedOnPoints: true });
+    expect(pos(ids.Davi).position).toBe(4);
   });
 });
 
@@ -389,5 +392,24 @@ describe("Teste J — Histórico", () => {
     const round1 = getMatchRounds(db, first.matchId)[0];
     expect(() => editClosedRound(db, round1.id, draft([j], {}), j)).toThrow(/encerrada/);
     expect(() => undoLastRound(db, first.matchId)).toThrow(/encerrada/);
+  });
+});
+
+describe("Dados salvos antes da mudança do desempate", () => {
+  it("partidas e ajustes com desempate pelo 0-0 passam a desempatar por vitórias", () => {
+    const storage = new MemoryStorage();
+    const antigo = {
+      ...emptyDatabase(),
+      matches: [
+        { id: "m1", startedAt: "", endedAt: null, status: "in_progress", participantIds: [], openingSearch: null,
+          settings: { zeroDoubleScoresZero: true, tieBreakers: ["zeroDoubles", "wins", "lowestMaxRound"], highestDouble: 12 } },
+      ],
+      settings: { ...emptyDatabase().settings, defaultMatchSettings: { zeroDoubleScoresZero: true, tieBreakers: ["zeroDoubles"], highestDouble: 12 } },
+    };
+    storage.setItem("domino-mexicano-placar:v1", JSON.stringify(antigo));
+    const db = new LocalStorageAdapter(storage).load();
+    expect(db.matches[0].settings.tieBreakers).toEqual(["wins", "lowestMaxRound"]);
+    expect(db.settings.defaultMatchSettings.tieBreakers).toEqual(["wins"]);
+    expect(db.matches[0].settings.zeroDoubleScoresZero).toBe(true); // o 0-0 continua marcando zero
   });
 });

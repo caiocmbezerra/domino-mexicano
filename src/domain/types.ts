@@ -14,11 +14,14 @@ export interface Player {
   createdAt: string; // ISO
 }
 
-/** Critérios de desempate configuráveis pela turma (não são regras oficiais). */
-export type TieBreaker = "zeroDoubles" | "wins" | "lowestMaxRound";
+/**
+ * Critérios de desempate configuráveis pela turma (não são regras oficiais).
+ * O 0-0 não desempata: a única vantagem dele é marcar zero na rodada.
+ */
+export type TieBreaker = "wins" | "lowestMaxRound";
 
 export interface MatchSettings {
-  /** Regra da turma: quem termina com o 0-0 na mão recebe zero ponto na rodada. */
+  /** Regra da turma: quem termina com o 0-0 na mão recebe zero ponto na rodada (só isso). */
   zeroDoubleScoresZero: boolean;
   /** Critérios aplicados, em ordem, quando a pontuação acumulada empata. */
   tieBreakers: TieBreaker[];

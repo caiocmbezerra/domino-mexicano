@@ -56,7 +56,7 @@ export function GlobalStatsScreen() {
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-lg font-extrabold">{nameOf(c.playerId)}</div>
                   <div className="text-sm text-muted">
-                    {c.matchesPlayed} partidas · {c.roundWins} vitórias de rodada · {c.zeroDoubles}× 0-0
+                    {c.matchesPlayed} partidas · {c.roundWins} vitórias de rodada
                   </div>
                 </div>
                 <div className="text-right">
